@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CompanyProfile</string>
+    <string name="company_list">Company List</string>
 </resources>

@@ -14,6 +14,8 @@ import com.olecco.android.companyprofile.CompanyProfileApplication
 import com.olecco.android.companyprofile.R
 import com.olecco.android.companyprofile.api.ProfilesRepository
 import com.olecco.android.companyprofile.model.Company
+import com.olecco.android.companyprofile.model.CompanyData
+import com.olecco.android.companyprofile.ui.PieChartView.PieChartAdapter
 import com.olecco.android.companyprofile.ui.viewmodel.ProfilesViewModel
 import com.olecco.android.companyprofile.ui.viewmodel.ProfilesViewModelFactory
 
@@ -26,8 +28,16 @@ class MainActivity : AppCompatActivity() {
         get() = profileApplication.profilesRepository
 
     lateinit var profilesViewModel: ProfilesViewModel
-
     lateinit var companyListAdapter: CompanyListAdapter
+    lateinit var pieChartView: PieChartView
+
+    private val companyDataObserver: Observer<CompanyData> = Observer {
+
+        Toast.makeText(this@MainActivity, it?.symbol + " : " + it?.divisions?.size, Toast.LENGTH_LONG).show()
+
+        profilesViewModel.companyData?.removeObservers(this@MainActivity)
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,10 +64,35 @@ class MainActivity : AppCompatActivity() {
 
                 val company = companyListAdapter.getCompany(position)
 
-                Toast.makeText(this@MainActivity, company.ticker, Toast.LENGTH_LONG).show()
+                profilesViewModel.selectedCompany = company.ticker!!
+
+
+                profilesViewModel.companyData?.observe(this@MainActivity, companyDataObserver)
+
+
+                //Toast.makeText(this@MainActivity, company.ticker, Toast.LENGTH_LONG).show()
 
             }
         }
+
+        pieChartView = findViewById(R.id.pie_chart)
+
+        val adapter: PieChartAdapter = object : PieChartAdapter {
+            override fun getItemValue(index: Int): Double {
+                if (index == 0) return 5.0
+                if (index == 1) return 3.0
+                if (index == 2) return 3.0
+                return 1.0
+            }
+
+            override fun getItemCount(): Int {
+                return 4
+            }
+        }
+
+        pieChartView.adapter = adapter
+
+
     }
 
     class CompanyListAdapter(context: Context): ArrayAdapter<String>(context,

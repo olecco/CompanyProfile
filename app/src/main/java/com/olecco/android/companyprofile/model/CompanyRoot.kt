@@ -3,18 +3,22 @@ package com.olecco.android.companyprofile.model
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 
-class Division {
+class CompanyRoot {
 
-    @SerializedName("name")
+    @SerializedName("text")
     @Expose
-    var name: String? = null
-
-    @SerializedName("description")
-    @Expose
-    var description: String? = null
+    var text: String? = null
 
     @SerializedName("value")
     @Expose
     var value: Long? = null
+
+}
+
+class TreeData {
+
+    @SerializedName("root")
+    @Expose
+    var companyRoot: CompanyRoot? = null
 
 }

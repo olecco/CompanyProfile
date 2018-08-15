@@ -13,4 +13,8 @@ class CompanyData {
     @Expose
     var divisions: Map<String, Division>? = null
 
+    @SerializedName("treeData")
+    @Expose
+    var treeData: TreeData? = null
+
 }

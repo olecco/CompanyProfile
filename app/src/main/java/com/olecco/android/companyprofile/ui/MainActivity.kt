@@ -6,6 +6,7 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -16,6 +17,7 @@ import com.olecco.android.companyprofile.R
 import com.olecco.android.companyprofile.api.ProfilesRepository
 import com.olecco.android.companyprofile.model.Company
 import com.olecco.android.companyprofile.model.CompanyData
+import com.olecco.android.companyprofile.model.Division
 import com.olecco.android.companyprofile.ui.PieChartView.PieChartAdapter
 import com.olecco.android.companyprofile.ui.viewmodel.ProfilesViewModel
 import com.olecco.android.companyprofile.ui.viewmodel.ProfilesViewModelFactory
@@ -32,11 +34,15 @@ class MainActivity : AppCompatActivity() {
     lateinit var companyListAdapter: CompanyListAdapter
     lateinit var pieChartView: PieChartView
 
-    private val companyDataObserver: Observer<CompanyData> = Observer {
+    private val divisionListObserver: Observer<List<Division>> = Observer {
 
-        Toast.makeText(this@MainActivity, it?.symbol + " : " + it?.divisions?.size, Toast.LENGTH_LONG).show()
+        //Toast.makeText(this@MainActivity, it?.symbol + " : " + it?.divisions?.size, Toast.LENGTH_LONG).show()
 
-        profilesViewModel.companyData?.removeObservers(this@MainActivity)
+        for (division in it!!) {
+            Log.d("111", division.name + " : " + division.value)
+        }
+
+        profilesViewModel.divisionList?.removeObservers(this@MainActivity)
 
     }
 
@@ -68,7 +74,7 @@ class MainActivity : AppCompatActivity() {
                 profilesViewModel.selectedCompany = company.ticker!!
 
 
-                profilesViewModel.companyData?.observe(this@MainActivity, companyDataObserver)
+                profilesViewModel.divisionList?.observe(this@MainActivity, divisionListObserver)
 
 
                 //Toast.makeText(this@MainActivity, company.ticker, Toast.LENGTH_LONG).show()

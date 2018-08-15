@@ -1,11 +1,12 @@
 package com.olecco.android.companyprofile.ui
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
+
+private const val TRANS_LINE_WIDTH_DP = 10
+private const val SEGMENTS_GAP_DP = 10
 
 class PieChartView : View {
 
@@ -16,7 +17,13 @@ class PieChartView : View {
             invalidate()
         }
     private var valueSum: Double = 0.0
+
     private val linePaint: Paint = Paint()
+    private val segmentPaint: Paint = Paint()
+    private val transparentPaint: Paint = Paint()
+
+    private val segmentPath: Path = Path()
+    private val rect: RectF = RectF()
 
     constructor(context: Context) : this(context, null)
 
@@ -24,10 +31,25 @@ class PieChartView : View {
 
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
         with(linePaint) {
-            color = Color.RED
+            color = Color.WHITE
             style = Paint.Style.STROKE
             isAntiAlias = true
         }
+
+        with(segmentPaint) {
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+
+        with(transparentPaint) {
+            color = Color.TRANSPARENT
+            style = Paint.Style.FILL
+            isAntiAlias = true
+            strokeWidth = TRANS_LINE_WIDTH_DP.toPx(resources)
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+        }
+
+        setLayerType(LAYER_TYPE_SOFTWARE, null)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -40,25 +62,59 @@ class PieChartView : View {
             val centerX: Float = (paddingStart + radiusX).toFloat()
             val centerY: Float = (paddingTop + radiusY).toFloat()
 
-            val radius = Math.min(radiusX, radiusY).toFloat()
+            val gap = SEGMENTS_GAP_DP.toPx(resources)
+            val radius = Math.min(radiusX, radiusY).toFloat()// + gap
 
-            val itemCount: Int = itemsAdapter.getItemCount()
+            rect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
+
+            val itemCount: Int = itemsAdapter.getSegmentCount()
+
+
+
             canvas.save()
-            for (i in 0..itemCount) {
+            for (i in 0 until itemCount) {
                 val itemValuePart = calculateValuePart(i)
-                canvas.drawLine(centerX, centerY,
-                        centerX, (centerY - radius), linePaint)
+
+
+                val halfAngle: Float = 360 * itemValuePart / 2
+
+                val dx: Float = (gap * Math.sin(Math.toRadians(halfAngle.toDouble()))).toFloat()
+                val dy: Float = (gap * Math.cos(Math.toRadians(halfAngle.toDouble()))).toFloat()
+
+                rect.set(centerX - radius + dx, centerY - radius - dy, centerX + radius + dx, centerY + radius - dy)
+
+
+                val count: Int = canvas.save()
+                //canvas.translate(dx, -dy)
+
+                segmentPaint.color = itemsAdapter.getSegmentColor(i)
+                segmentPath.reset()
+                segmentPath.moveTo(centerX + dx, centerY - dy)
+                segmentPath.lineTo(centerX + dx, (centerY - dy - radius))
+                segmentPath.arcTo(rect, 270.0f, 360 * itemValuePart)
+                segmentPath.close()
+                canvas.drawPath(segmentPath, segmentPaint)
+
+                //canvas.restoreToCount(count)
+
+//                canvas.drawLine(centerX, centerY,
+//                        centerX, (centerY - radius), transparentPaint)
+
+                //canvas.drawCircle(centerX, centerY, 4*TRANS_LINE_WIDTH_DP.toPx(resources), transparentPaint)
+
                 canvas.rotate(360 * itemValuePart, centerX, centerY)
-                canvas.drawCircle(centerX, centerY, radius, linePaint)
             }
             canvas.restore()
+
+            //canvas.drawCircle(centerX, centerY, radius, linePaint)
+
         }
     }
 
     private fun calculateValuePart(index: Int) : Float {
         val itemAdapter = adapter
         if (itemAdapter != null) {
-            val itemValue = itemAdapter.getItemValue(index)
+            val itemValue = itemAdapter.getSegmentValue(index)
             return (itemValue / valueSum).toFloat()
         }
         return 0.0f
@@ -67,10 +123,10 @@ class PieChartView : View {
     private fun calculateValueSum(): Double {
         val itemsAdapter = adapter
         if (itemsAdapter != null) {
-            val itemCount: Int = itemsAdapter.getItemCount()
+            val itemCount: Int = itemsAdapter.getSegmentCount()
             var sum = 0.0
-            for (i in 0..itemCount) {
-                sum += itemsAdapter.getItemValue(i)
+            for (i in 0 until itemCount) {
+                sum += itemsAdapter.getSegmentValue(i)
             }
             return sum
         }
@@ -79,9 +135,11 @@ class PieChartView : View {
 
     interface PieChartAdapter {
 
-        fun getItemCount(): Int
+        fun getSegmentCount(): Int
 
-        fun getItemValue(index: Int): Double
+        fun getSegmentValue(index: Int): Double
+
+        fun getSegmentColor(index: Int): Int
 
     }
 

@@ -3,6 +3,7 @@ package com.olecco.android.companyprofile.ui
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
@@ -78,14 +79,21 @@ class MainActivity : AppCompatActivity() {
         pieChartView = findViewById(R.id.pie_chart)
 
         val adapter: PieChartAdapter = object : PieChartAdapter {
-            override fun getItemValue(index: Int): Double {
+            override fun getSegmentColor(index: Int): Int {
+                if (index == 0) return Color.RED
+                if (index == 1) return Color.GREEN
+                if (index == 2) return Color.BLUE
+                return Color.WHITE
+            }
+
+            override fun getSegmentValue(index: Int): Double {
                 if (index == 0) return 5.0
                 if (index == 1) return 3.0
                 if (index == 2) return 3.0
                 return 1.0
             }
 
-            override fun getItemCount(): Int {
+            override fun getSegmentCount(): Int {
                 return 4
             }
         }

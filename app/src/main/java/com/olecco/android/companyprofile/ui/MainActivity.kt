@@ -11,13 +11,11 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Spinner
-import android.widget.Toast
 import com.olecco.android.companyprofile.CompanyProfileApplication
 import com.olecco.android.companyprofile.R
 import com.olecco.android.companyprofile.api.ProfilesRepository
 import com.olecco.android.companyprofile.model.Company
 import com.olecco.android.companyprofile.model.CompanyData
-import com.olecco.android.companyprofile.model.Division
 import com.olecco.android.companyprofile.ui.PieChartView.PieChartAdapter
 import com.olecco.android.companyprofile.ui.viewmodel.ProfilesViewModel
 import com.olecco.android.companyprofile.ui.viewmodel.ProfilesViewModelFactory
@@ -34,15 +32,15 @@ class MainActivity : AppCompatActivity() {
     lateinit var companyListAdapter: CompanyListAdapter
     lateinit var pieChartView: PieChartView
 
-    private val divisionListObserver: Observer<List<Division>> = Observer {
+    private val companyDataObserver: Observer<CompanyData> = Observer {
 
         //Toast.makeText(this@MainActivity, it?.symbol + " : " + it?.divisions?.size, Toast.LENGTH_LONG).show()
 
-        for (division in it!!) {
-            Log.d("111", division.name + " : " + division.value)
-        }
 
-        profilesViewModel.divisionList?.removeObservers(this@MainActivity)
+        Log.d("111", "size=${it?.treeData?.companyRoot?.divisionDataList?.size}");
+
+
+        profilesViewModel.companyData?.removeObservers(this@MainActivity)
 
     }
 
@@ -74,7 +72,7 @@ class MainActivity : AppCompatActivity() {
                 profilesViewModel.selectedCompany = company.ticker!!
 
 
-                profilesViewModel.divisionList?.observe(this@MainActivity, divisionListObserver)
+                profilesViewModel.companyData?.observe(this@MainActivity, companyDataObserver)
 
 
                 //Toast.makeText(this@MainActivity, company.ticker, Toast.LENGTH_LONG).show()

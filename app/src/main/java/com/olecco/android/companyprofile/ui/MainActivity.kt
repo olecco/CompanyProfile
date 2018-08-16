@@ -83,6 +83,10 @@ class MainActivity : AppCompatActivity() {
         pieChartView = findViewById(R.id.pie_chart)
 
         val adapter: PieChartAdapter = object : PieChartAdapter {
+            override fun getChartName(): String {
+                return "AAPL"
+            }
+
             override fun getSegmentColor(index: Int): Int {
                 if (index == 0) return Color.RED
                 if (index == 1) return Color.GREEN

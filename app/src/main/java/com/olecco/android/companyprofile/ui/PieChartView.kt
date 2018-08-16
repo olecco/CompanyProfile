@@ -7,6 +7,9 @@ import android.view.View
 
 private const val TRANS_LINE_WIDTH_DP = 4
 private const val SEGMENTS_GAP_DP = 10
+private const val OVERLAY_RADIUS_PART = 0.55f
+private const val INNER_RADIUS_PART = 0.5f
+private const val NAME_TEXT_SIZE = 24
 
 class PieChartView : View {
 
@@ -18,26 +21,29 @@ class PieChartView : View {
         }
     private var valueSum: Double = 0.0
 
-    private val linePaint: Paint = Paint()
     private val segmentPaint: Paint = Paint()
+    private val overlayPaint: Paint = Paint()
     private val transparentLinePaint: Paint = Paint()
     private val transparentFillPaint: Paint
+    private val nameTextPaint: Paint = Paint()
 
     private val segmentPath: Path = Path()
-    private val rect: RectF = RectF()
+    private val segmentOverlayPath: Path = Path()
+    private val segmentRect: RectF = RectF()
+    private val segmentOverlayRect: RectF = RectF()
 
     constructor(context: Context) : this(context, null)
 
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
 
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
-        with(linePaint) {
-            color = Color.YELLOW
-            style = Paint.Style.STROKE
+        with(segmentPaint) {
+            style = Paint.Style.FILL
             isAntiAlias = true
         }
 
-        with(segmentPaint) {
+        with(overlayPaint) {
+            color = Color.parseColor("#40000000")
             style = Paint.Style.FILL
             isAntiAlias = true
         }
@@ -53,6 +59,12 @@ class PieChartView : View {
         transparentFillPaint = Paint(transparentLinePaint)
         transparentFillPaint.style = Paint.Style.FILL
 
+        with(nameTextPaint) {
+            color = Color.parseColor("#E0FFFFFF") // todo set in attrs
+            textSize = NAME_TEXT_SIZE.toPx(resources)
+            isAntiAlias = true
+        }
+
         setLayerType(LAYER_TYPE_SOFTWARE, null)
     }
 
@@ -67,9 +79,12 @@ class PieChartView : View {
             val centerY: Float = (paddingTop + radiusY).toFloat()
 
             val gap = SEGMENTS_GAP_DP.toPx(resources)
-            val radius = Math.min(radiusX, radiusY).toFloat()// + gap
+            val radius = Math.min(radiusX, radiusY).toFloat()
+            val overlayRadius = radius * OVERLAY_RADIUS_PART
 
-            rect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
+            segmentRect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
+            segmentOverlayRect.set(centerX - overlayRadius, centerY - overlayRadius,
+                    centerX + overlayRadius, centerY + overlayRadius)
 
             val itemCount: Int = itemsAdapter.getSegmentCount()
 
@@ -85,42 +100,37 @@ class PieChartView : View {
                 val dx: Float = (gap * Math.sin(Math.toRadians(halfAngle.toDouble()))).toFloat()
                 val dy: Float = (gap * Math.cos(Math.toRadians(halfAngle.toDouble()))).toFloat()
 
-                rect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
-
-
-                val count: Int = canvas.save()
-                //canvas.translate(dx, -dy)
+                segmentRect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
 
                 segmentPaint.color = itemsAdapter.getSegmentColor(i)
 
                 segmentPath.reset()
                 segmentPath.moveTo(centerX, centerY)
                 segmentPath.lineTo(centerX, (centerY - radius))
-                segmentPath.arcTo(rect, 270.0f, 360 * itemValuePart)
+                segmentPath.arcTo(segmentRect, 270.0f, 360 * itemValuePart)
                 segmentPath.close()
 
-
-
-
+                segmentOverlayPath.reset()
+                segmentOverlayPath.moveTo(centerX, centerY)
+                segmentOverlayPath.lineTo(centerX, (centerY - overlayRadius))
+                segmentOverlayPath.arcTo(segmentOverlayRect, 270.0f, 360 * itemValuePart)
+                segmentOverlayPath.close()
 
                 canvas.drawPath(segmentPath, segmentPaint)
+
+                canvas.drawPath(segmentOverlayPath, overlayPaint)
+
                 canvas.drawPath(segmentPath, transparentLinePaint)
-
-
-                //canvas.restoreToCount(count)
-
-//                canvas.drawLine(centerX, centerY,
-//                        centerX, (centerY - radius), transparentLinePaint)
-
 
 
                 canvas.rotate(360 * itemValuePart, centerX, centerY)
             }
             canvas.restore()
 
-            canvas.drawCircle(centerX, centerY, 0.5f * radius, transparentFillPaint)
+            canvas.drawCircle(centerX, centerY, INNER_RADIUS_PART * radius, transparentFillPaint)
 
-            //canvas.drawCircle(centerX, centerY, gap, linePaint)
+
+            canvas.drawTextCentered(itemsAdapter.getChartName(), centerX, centerY, nameTextPaint)
 
         }
     }
@@ -148,6 +158,8 @@ class PieChartView : View {
     }
 
     interface PieChartAdapter {
+
+        fun getChartName(): String
 
         fun getSegmentCount(): Int
 

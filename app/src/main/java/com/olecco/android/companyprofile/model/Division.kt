@@ -15,6 +15,6 @@ class Division {
 
     @SerializedName("value")
     @Expose
-    var value: Long? = null
+    var value: Double? = null
 
 }

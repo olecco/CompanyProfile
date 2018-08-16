@@ -15,7 +15,7 @@ class DivisionData {
 
     @SerializedName("value")
     @Expose
-    var value: Long? = null
+    var value: Double? = null
 
     @SerializedName("percent")
     @Expose

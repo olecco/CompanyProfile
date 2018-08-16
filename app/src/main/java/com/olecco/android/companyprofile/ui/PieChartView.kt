@@ -5,7 +5,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
 
-private const val TRANS_LINE_WIDTH_DP = 10
+private const val TRANS_LINE_WIDTH_DP = 4
 private const val SEGMENTS_GAP_DP = 10
 
 class PieChartView : View {
@@ -31,7 +31,7 @@ class PieChartView : View {
 
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
         with(linePaint) {
-            color = Color.WHITE
+            color = Color.YELLOW
             style = Paint.Style.STROKE
             isAntiAlias = true
         }
@@ -43,7 +43,7 @@ class PieChartView : View {
 
         with(transparentPaint) {
             color = Color.TRANSPARENT
-            style = Paint.Style.FILL
+            style = Paint.Style.STROKE
             isAntiAlias = true
             strokeWidth = TRANS_LINE_WIDTH_DP.toPx(resources)
             xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
@@ -81,19 +81,27 @@ class PieChartView : View {
                 val dx: Float = (gap * Math.sin(Math.toRadians(halfAngle.toDouble()))).toFloat()
                 val dy: Float = (gap * Math.cos(Math.toRadians(halfAngle.toDouble()))).toFloat()
 
-                rect.set(centerX - radius + dx, centerY - radius - dy, centerX + radius + dx, centerY + radius - dy)
+                rect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
 
 
                 val count: Int = canvas.save()
                 //canvas.translate(dx, -dy)
 
                 segmentPaint.color = itemsAdapter.getSegmentColor(i)
+
                 segmentPath.reset()
-                segmentPath.moveTo(centerX + dx, centerY - dy)
-                segmentPath.lineTo(centerX + dx, (centerY - dy - radius))
+                segmentPath.moveTo(centerX, centerY)
+                segmentPath.lineTo(centerX, (centerY - radius))
                 segmentPath.arcTo(rect, 270.0f, 360 * itemValuePart)
                 segmentPath.close()
+
+
+
+
+
                 canvas.drawPath(segmentPath, segmentPaint)
+                canvas.drawPath(segmentPath, transparentPaint)
+
 
                 //canvas.restoreToCount(count)
 
@@ -106,7 +114,7 @@ class PieChartView : View {
             }
             canvas.restore()
 
-            //canvas.drawCircle(centerX, centerY, radius, linePaint)
+            canvas.drawCircle(centerX, centerY, gap, linePaint)
 
         }
     }

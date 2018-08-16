@@ -20,7 +20,8 @@ class PieChartView : View {
 
     private val linePaint: Paint = Paint()
     private val segmentPaint: Paint = Paint()
-    private val transparentPaint: Paint = Paint()
+    private val transparentLinePaint: Paint = Paint()
+    private val transparentFillPaint: Paint
 
     private val segmentPath: Path = Path()
     private val rect: RectF = RectF()
@@ -41,13 +42,16 @@ class PieChartView : View {
             isAntiAlias = true
         }
 
-        with(transparentPaint) {
+        with(transparentLinePaint) {
             color = Color.TRANSPARENT
             style = Paint.Style.STROKE
             isAntiAlias = true
             strokeWidth = TRANS_LINE_WIDTH_DP.toPx(resources)
             xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
         }
+
+        transparentFillPaint = Paint(transparentLinePaint)
+        transparentFillPaint.style = Paint.Style.FILL
 
         setLayerType(LAYER_TYPE_SOFTWARE, null)
     }
@@ -100,21 +104,23 @@ class PieChartView : View {
 
 
                 canvas.drawPath(segmentPath, segmentPaint)
-                canvas.drawPath(segmentPath, transparentPaint)
+                canvas.drawPath(segmentPath, transparentLinePaint)
 
 
                 //canvas.restoreToCount(count)
 
 //                canvas.drawLine(centerX, centerY,
-//                        centerX, (centerY - radius), transparentPaint)
+//                        centerX, (centerY - radius), transparentLinePaint)
 
-                //canvas.drawCircle(centerX, centerY, 4*TRANS_LINE_WIDTH_DP.toPx(resources), transparentPaint)
+
 
                 canvas.rotate(360 * itemValuePart, centerX, centerY)
             }
             canvas.restore()
 
-            canvas.drawCircle(centerX, centerY, gap, linePaint)
+            canvas.drawCircle(centerX, centerY, 0.5f * radius, transparentFillPaint)
+
+            //canvas.drawCircle(centerX, centerY, gap, linePaint)
 
         }
     }

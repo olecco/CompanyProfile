@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
+import java.lang.Math.PI
 
 private const val TRANS_LINE_WIDTH_DP = 4
 private const val SEGMENTS_GAP_DP = 10
@@ -97,8 +98,8 @@ class PieChartView : View {
 
                 val halfAngle: Float = 360 * itemValuePart / 2
 
-                val dx: Float = (gap * Math.sin(Math.toRadians(halfAngle.toDouble()))).toFloat()
-                val dy: Float = (gap * Math.cos(Math.toRadians(halfAngle.toDouble()))).toFloat()
+                val dx: Float = (gap * Math.sin(Math.toRadians(halfAngle.toDouble()) + PI / 2)).toFloat()
+                val dy: Float = (gap * Math.cos(Math.toRadians(halfAngle.toDouble()) + PI / 2)).toFloat()
 
                 segmentRect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
 

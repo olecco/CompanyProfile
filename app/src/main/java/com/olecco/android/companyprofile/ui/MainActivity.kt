@@ -108,6 +108,13 @@ class MainActivity : AppCompatActivity() {
 
         pieChartView.adapter = adapter
 
+        pieChartView.pieChartClickListener = object : PieChartClickListener {
+            override fun onSegmentClick(segmentIndex: Int) {
+                Log.d("111", "index=" + segmentIndex)
+            }
+
+        }
+
 
     }
 

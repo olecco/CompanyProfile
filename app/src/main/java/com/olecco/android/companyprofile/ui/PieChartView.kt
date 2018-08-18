@@ -2,7 +2,11 @@ package com.olecco.android.companyprofile.ui
 
 import android.content.Context
 import android.graphics.*
+import android.support.v4.view.GestureDetectorCompat
 import android.util.AttributeSet
+import android.util.Log
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import java.lang.Math.PI
 
@@ -12,6 +16,10 @@ private const val OVERLAY_RADIUS_PART = 0.55f
 private const val INNER_RADIUS_PART = 0.5f
 private const val NAME_TEXT_SIZE = 24
 
+interface PieChartClickListener {
+    fun onSegmentClick(segmentIndex: Int)
+}
+
 class PieChartView : View {
 
     var adapter: PieChartAdapter? = null
@@ -20,6 +28,8 @@ class PieChartView : View {
             valueSum = if (value == null) 0.0 else calculateValueSum()
             invalidate()
         }
+    var pieChartClickListener: PieChartClickListener? = null
+
     private var valueSum: Double = 0.0
 
     private val segmentPaint: Paint = Paint()
@@ -32,6 +42,12 @@ class PieChartView : View {
     private val segmentOverlayPath: Path = Path()
     private val segmentRect: RectF = RectF()
     private val segmentOverlayRect: RectF = RectF()
+
+    private val segmentRegions: MutableList<Region> = mutableListOf()
+    private val pathRotationMatrix: Matrix = Matrix()
+    private val pathRotationRegion: Region = Region()
+
+    private val gestureDetector: GestureDetectorCompat
 
     constructor(context: Context) : this(context, null)
 
@@ -67,6 +83,22 @@ class PieChartView : View {
         }
 
         setLayerType(LAYER_TYPE_SOFTWARE, null)
+
+        gestureDetector = GestureDetectorCompat(getContext(), object : GestureDetector.SimpleOnGestureListener() {
+
+            override fun onDown(e: MotionEvent): Boolean {
+                return true
+            }
+
+            override fun onSingleTapUp(e: MotionEvent): Boolean {
+                val segmentIndex = getClickedRegionIndex(e.x.toInt(), e.y.toInt())
+                if (segmentIndex != -1) {
+                    notifySegmentClick(segmentIndex)
+                    return true
+                }
+                return false
+            }
+        })
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -90,7 +122,7 @@ class PieChartView : View {
             val itemCount: Int = itemsAdapter.getSegmentCount()
 
 
-
+            var regionRotationAngle = 0.0f
             canvas.save()
             for (i in 0 until itemCount) {
                 val itemValuePart = calculateValuePart(i)
@@ -117,11 +149,22 @@ class PieChartView : View {
                 segmentOverlayPath.arcTo(segmentOverlayRect, 270.0f, 360 * itemValuePart)
                 segmentOverlayPath.close()
 
+
                 canvas.drawPath(segmentPath, segmentPaint)
 
                 canvas.drawPath(segmentOverlayPath, overlayPaint)
 
                 canvas.drawPath(segmentPath, transparentLinePaint)
+
+
+                pathRotationMatrix.reset()
+                pathRotationMatrix.postRotate(regionRotationAngle, centerX, centerY)
+                segmentPath.transform(pathRotationMatrix)
+
+                pathRotationRegion.set(segmentRect.left.toInt(),
+                        segmentRect.top.toInt(), segmentRect.right.toInt(), segmentRect.bottom.toInt())
+                segmentRegions[i].setPath(segmentPath, pathRotationRegion)
+                regionRotationAngle += 360 * itemValuePart
 
 
                 canvas.rotate(360 * itemValuePart, centerX, centerY)
@@ -136,6 +179,22 @@ class PieChartView : View {
         }
     }
 
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+       if (gestureDetector.onTouchEvent(event)) {
+           return true
+       }
+        return super.onTouchEvent(event)
+    }
+
+    private fun getClickedRegionIndex(x: Int, y: Int): Int {
+        for (i in 0 until segmentRegions.size) {
+            if (segmentRegions[i].contains(x, y)) {
+                return i
+            }
+        }
+        return -1
+    }
+
     private fun calculateValuePart(index: Int) : Float {
         val itemAdapter = adapter
         if (itemAdapter != null) {
@@ -146,16 +205,22 @@ class PieChartView : View {
     }
 
     private fun calculateValueSum(): Double {
+        segmentRegions.clear()
         val itemsAdapter = adapter
         if (itemsAdapter != null) {
             val itemCount: Int = itemsAdapter.getSegmentCount()
             var sum = 0.0
             for (i in 0 until itemCount) {
                 sum += itemsAdapter.getSegmentValue(i)
+                segmentRegions.add(Region())
             }
             return sum
         }
         return 0.0
+    }
+
+    fun notifySegmentClick(segmentIndex: Int) {
+        pieChartClickListener?.onSegmentClick(segmentIndex)
     }
 
     interface PieChartAdapter {

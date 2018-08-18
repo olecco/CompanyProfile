@@ -4,6 +4,7 @@ import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Transformations
 import android.arch.lifecycle.ViewModel
+import com.olecco.android.companyprofile.api.ApiResponse
 import com.olecco.android.companyprofile.api.ProfilesRepository
 import com.olecco.android.companyprofile.model.CompanyData
 import com.olecco.android.companyprofile.model.CompanyList
@@ -11,8 +12,8 @@ import com.olecco.android.companyprofile.model.DivisionData
 
 class ProfilesViewModel(private val repository: ProfilesRepository) : ViewModel() {
 
-    private var _companyList: LiveData<CompanyList>? = null
-    val companyList: LiveData<CompanyList>
+    private var _companyList: LiveData<ApiResponse<CompanyList>>? = null
+    val companyList: LiveData<ApiResponse<CompanyList>>
         get() {
             if (_companyList == null) {
                 _companyList = repository.getCompanyList()

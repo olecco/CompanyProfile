@@ -13,6 +13,7 @@ import android.widget.ArrayAdapter
 import android.widget.Spinner
 import com.olecco.android.companyprofile.CompanyProfileApplication
 import com.olecco.android.companyprofile.R
+import com.olecco.android.companyprofile.api.ApiResponseState
 import com.olecco.android.companyprofile.api.ProfilesRepository
 import com.olecco.android.companyprofile.model.Company
 import com.olecco.android.companyprofile.model.CompanyData
@@ -33,7 +34,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var profilesViewModel: ProfilesViewModel
     private lateinit var companyListAdapter: CompanyListAdapter
+
+    private lateinit var companySpinnerView: Spinner
     private lateinit var pieChartView: PieChartView
+    private lateinit var progressView: View
 
     private lateinit var pieChartAdapter: DivisionListAdapter
 
@@ -48,6 +52,20 @@ class MainActivity : AppCompatActivity() {
                 ProfilesViewModelFactory(profilesRepository)).get(ProfilesViewModel::class.java)
 
         profilesViewModel.companyList.observe(this, Observer {
+            when(it?.state) {
+                ApiResponseState.LOADING -> {
+                    companySpinnerView.hide()
+                    pieChartView.hide()
+                    progressView.show()
+                }
+                ApiResponseState.SUCCESS -> {
+
+                }
+                else -> {
+
+                }
+            }
+
             companyListAdapter.data = it?.companies!!
         })
 
@@ -66,9 +84,9 @@ class MainActivity : AppCompatActivity() {
     private fun bindViews() {
         companyListAdapter = CompanyListAdapter(this)
         companyListAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        val companyListSpinner: Spinner = findViewById(R.id.company_list)
-        companyListSpinner.adapter = companyListAdapter
-        companyListSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        companySpinnerView = findViewById(R.id.company_list)
+        companySpinnerView.adapter = companyListAdapter
+        companySpinnerView.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(p0: AdapterView<*>?) { }
 
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, position: Int, p3: Long) {
@@ -80,6 +98,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         pieChartView = findViewById(R.id.pie_chart)
+        progressView = findViewById(R.id.progress)
 
 //        val adapter: PieChartAdapter = object : PieChartAdapter {
 //            override fun getSegmentName(index: Int): String {

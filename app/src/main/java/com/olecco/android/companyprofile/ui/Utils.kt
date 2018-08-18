@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import android.util.TypedValue
+import android.view.View
 
 fun Int.toPx(resources: Resources): Float {
     val displaymetrics = resources.displayMetrics
@@ -21,4 +22,12 @@ fun Paint.getTextHeight(text: String): Int {
     val textRect: Rect = Rect()
     this.getTextBounds(text, 0, text.length, textRect)
     return textRect.height()
+}
+
+fun View.show() {
+    this.visibility = View.VISIBLE
+}
+
+fun View.hide() {
+    this.visibility = View.GONE
 }

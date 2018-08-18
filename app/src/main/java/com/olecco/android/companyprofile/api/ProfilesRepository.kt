@@ -8,34 +8,27 @@ import kotlinx.coroutines.experimental.launch
 
 class ProfilesRepository(private val apiClient: ApiClient) {
 
-    fun getCompanyList(): LiveData<CompanyList> {
+    fun getCompanyList(): LiveData<ApiResponse<CompanyList>> {
 
-        val result = MutableLiveData<CompanyList>()
+        val result = MutableLiveData<ApiResponse<CompanyList>>()
+
+        val apiResponse: ApiResponse<CompanyList> = ApiResponse()
+        apiResponse.state = ApiResponseState.LOADING
+        result.postValue(apiResponse)
 
         launch {
             val request = apiClient.getCompanyList()
 
-            val response = request.await()
+            apiResponse.data = request.await()
+            apiResponse.state = ApiResponseState.SUCCESS
 
-
-            result.postValue(response)
-
+            result.postValue(apiResponse)
 
         }
 
 
-//        launch {
-//
-//            val resp: Response<CompanyList> = req()
-//
-//
-//            Log.d("111", "size=${resp.body()?.companies?.size}")
-//        }
-
-
 
         return result
-
     }
 
 

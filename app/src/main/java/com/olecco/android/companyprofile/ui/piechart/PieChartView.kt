@@ -17,7 +17,7 @@ private const val OVERLAY_RADIUS_PART = 0.55f
 private const val INNER_RADIUS_PART = 0.5f
 private const val TEXT_RADIUS_PART = 0.75f
 private const val NAME_TEXT_SIZE = 24
-private const val SEGMENT_TEXT_SIZE = 20
+private const val SEGMENT_TEXT_SIZE = 16
 
 private const val LEGEND_LINE_GAP_DP = 10
 private const val LEGEND_MARKER_SIZE_DP = 24
@@ -135,7 +135,7 @@ class PieChartView : View {
             val radius = Math.min(radiusX, radiusY).toFloat()
             val overlayRadius = radius * OVERLAY_RADIUS_PART
 
-            val centerX: Float = (paddingStart + radius)
+            val centerX: Float = (paddingStart + (measuredWidth - paddingStart - paddingEnd) / 2.0f)
             val centerY: Float = (paddingTop + radius)
 
             segmentRect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
@@ -146,7 +146,6 @@ class PieChartView : View {
 
 
             var regionRotationAngle = 0.0f
-            var textAngle = 0.0f
             for (i in 0 until itemCount) {
                 val itemValuePart = calculateValuePart(i)
 
@@ -171,9 +170,7 @@ class PieChartView : View {
                 segmentPath.transform(pathRotationMatrix)
                 segmentOverlayPath.transform(pathRotationMatrix)
 
-                textAngle = regionRotationAngle + 360 * itemValuePart / 2
                 regionRotationAngle += 360 * itemValuePart
-
 
                 pathRotationRegion.set(segmentRect.left.toInt(),
                         segmentRect.top.toInt(), segmentRect.right.toInt(), segmentRect.bottom.toInt())
@@ -182,6 +179,31 @@ class PieChartView : View {
                 canvas.drawPath(segmentPath, segmentPaint)
                 canvas.drawPath(segmentOverlayPath, overlayPaint)
                 canvas.drawPath(segmentPath, transparentLinePaint)
+            }
+
+            canvas.drawCircle(centerX, centerY, INNER_RADIUS_PART * radius, transparentFillPaint)
+
+            canvas.drawTextCentered(itemsAdapter.getChartName(), centerX, centerY, nameTextPaint)
+
+            drawSegmentLabels(canvas, radius, centerX, centerY)
+
+            drawLegend(canvas)
+        }
+    }
+
+    private fun drawSegmentLabels(canvas: Canvas, radius: Float, centerX: Float, centerY: Float) {
+        val itemsAdapter = adapter
+        if (itemsAdapter != null) {
+
+            val itemCount: Int = itemsAdapter.getSegmentCount()
+
+            var regionRotationAngle = 0.0f
+            var textAngle: Float
+            for (i in 0 until itemCount) {
+                val itemValuePart = calculateValuePart(i)
+
+                textAngle = regionRotationAngle + 360 * itemValuePart / 2
+                regionRotationAngle += 360 * itemValuePart
 
                 val gap = TEXT_RADIUS_PART * radius
                 val textAngleRad = Math.toRadians(textAngle.toDouble())
@@ -193,12 +215,6 @@ class PieChartView : View {
                         centerX + dx, centerY + dy, segmentTextPaint)
 
             }
-
-            canvas.drawCircle(centerX, centerY, INNER_RADIUS_PART * radius, transparentFillPaint)
-
-            canvas.drawTextCentered(itemsAdapter.getChartName(), centerX, centerY, nameTextPaint)
-
-            drawLegend(canvas)
         }
     }
 

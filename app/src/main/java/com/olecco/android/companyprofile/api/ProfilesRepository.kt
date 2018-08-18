@@ -2,13 +2,9 @@ package com.olecco.android.companyprofile.api
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
-import android.util.Log
 import com.olecco.android.companyprofile.model.CompanyData
 import com.olecco.android.companyprofile.model.CompanyList
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
-import retrofit2.Response
 
 class ProfilesRepository(private val apiClient: ApiClient) {
 

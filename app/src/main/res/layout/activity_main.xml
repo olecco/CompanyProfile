@@ -17,7 +17,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
 
-    <com.olecco.android.companyprofile.ui.PieChartView
+    <com.olecco.android.companyprofile.ui.piechart.PieChartView
         android:id="@+id/pie_chart"
         android:layout_width="0dp"
         android:layout_height="0dp"

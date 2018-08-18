@@ -3,4 +3,16 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <array name="profile_colors">
+        <item>#38A7DE</item>
+        <item>#0062A9</item>
+        <item>#2F2F81</item>
+        <item>#5B4FA1</item>
+        <item>#7789C4</item>
+        <item>#34A6B6</item>
+        <item>#7FCCC4</item>
+        <item>#B4E0DC</item>
+    </array>
+
 </resources>

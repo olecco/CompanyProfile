@@ -16,3 +16,9 @@ fun Canvas.drawTextCentered(text: String, centerX: Float, centerY: Float, textPa
     textPaint.getTextBounds(text, 0, text.length, textRect)
     this.drawText(text, centerX - textRect.width() / 2,centerY + textRect.height() / 2, textPaint)
 }
+
+fun Paint.getTextHeight(text: String): Int {
+    val textRect: Rect = Rect()
+    this.getTextBounds(text, 0, text.length, textRect)
+    return textRect.height()
+}

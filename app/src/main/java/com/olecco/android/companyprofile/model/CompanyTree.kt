@@ -19,7 +19,7 @@ class CompanyRoot {
 
     @SerializedName("value")
     @Expose
-    var value: Long? = null
+    var value: Double? = null
 
     @SerializedName("child")
     @Expose

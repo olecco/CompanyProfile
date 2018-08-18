@@ -16,7 +16,9 @@ import com.olecco.android.companyprofile.R
 import com.olecco.android.companyprofile.api.ProfilesRepository
 import com.olecco.android.companyprofile.model.Company
 import com.olecco.android.companyprofile.model.CompanyData
-import com.olecco.android.companyprofile.ui.PieChartView.PieChartAdapter
+import com.olecco.android.companyprofile.ui.piechart.PieChartAdapter
+import com.olecco.android.companyprofile.ui.piechart.PieChartClickListener
+import com.olecco.android.companyprofile.ui.piechart.PieChartView
 import com.olecco.android.companyprofile.ui.viewmodel.ProfilesViewModel
 import com.olecco.android.companyprofile.ui.viewmodel.ProfilesViewModelFactory
 
@@ -32,18 +34,6 @@ class MainActivity : AppCompatActivity() {
     lateinit var companyListAdapter: CompanyListAdapter
     lateinit var pieChartView: PieChartView
 
-    private val companyDataObserver: Observer<CompanyData> = Observer {
-
-        //Toast.makeText(this@MainActivity, it?.symbol + " : " + it?.divisions?.size, Toast.LENGTH_LONG).show()
-
-
-        Log.d("111", "size=${it?.treeData?.companyRoot?.divisionDataList?.size}");
-
-
-        profilesViewModel.companyData?.removeObservers(this@MainActivity)
-
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -54,6 +44,13 @@ class MainActivity : AppCompatActivity() {
 
         profilesViewModel.companyList.observe(this, Observer {
             companyListAdapter.data = it?.companies!!
+        })
+
+        profilesViewModel.divisionsData.observe(this, Observer {
+
+            Log.d("111", "size=${it?.size}")
+
+
         })
     }
 
@@ -69,13 +66,7 @@ class MainActivity : AppCompatActivity() {
 
                 val company = companyListAdapter.getCompany(position)
 
-                profilesViewModel.selectedCompany = company.ticker!!
-
-
-                profilesViewModel.companyData?.observe(this@MainActivity, companyDataObserver)
-
-
-                //Toast.makeText(this@MainActivity, company.ticker, Toast.LENGTH_LONG).show()
+                profilesViewModel.selectCompany(company.ticker!!)
 
             }
         }
@@ -83,6 +74,13 @@ class MainActivity : AppCompatActivity() {
         pieChartView = findViewById(R.id.pie_chart)
 
         val adapter: PieChartAdapter = object : PieChartAdapter {
+            override fun getSegmentName(index: Int): String {
+                if (index == 0) return "000000000000000"
+                if (index == 1) return "1111111"
+                if (index == 2) return "22222222222222222222222222"
+                return "333333333333333"
+            }
+
             override fun getChartName(): String {
                 return "AAPL"
             }

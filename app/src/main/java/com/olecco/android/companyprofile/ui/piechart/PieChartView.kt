@@ -1,20 +1,40 @@
-package com.olecco.android.companyprofile.ui
+package com.olecco.android.companyprofile.ui.piechart
 
 import android.content.Context
 import android.graphics.*
 import android.support.v4.view.GestureDetectorCompat
 import android.util.AttributeSet
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import com.olecco.android.companyprofile.ui.drawTextCentered
+import com.olecco.android.companyprofile.ui.getTextHeight
+import com.olecco.android.companyprofile.ui.toPx
 import java.lang.Math.PI
 
 private const val TRANS_LINE_WIDTH_DP = 4
-private const val SEGMENTS_GAP_DP = 10
 private const val OVERLAY_RADIUS_PART = 0.55f
 private const val INNER_RADIUS_PART = 0.5f
+private const val TEXT_RADIUS_PART = 0.75f
 private const val NAME_TEXT_SIZE = 24
+private const val SEGMENT_TEXT_SIZE = 20
+
+private const val LEGEND_LINE_GAP_DP = 10
+private const val LEGEND_MARKER_SIZE_DP = 24
+
+interface PieChartAdapter {
+
+    fun getChartName(): String
+
+    fun getSegmentCount(): Int
+
+    fun getSegmentValue(index: Int): Double
+
+    fun getSegmentColor(index: Int): Int
+
+    fun getSegmentName(index: Int): String
+
+}
 
 interface PieChartClickListener {
     fun onSegmentClick(segmentIndex: Int)
@@ -37,6 +57,7 @@ class PieChartView : View {
     private val transparentLinePaint: Paint = Paint()
     private val transparentFillPaint: Paint
     private val nameTextPaint: Paint = Paint()
+    private val segmentTextPaint: Paint
 
     private val segmentPath: Path = Path()
     private val segmentOverlayPath: Path = Path()
@@ -82,6 +103,9 @@ class PieChartView : View {
             isAntiAlias = true
         }
 
+        segmentTextPaint = Paint(nameTextPaint)
+        segmentTextPaint.textSize = SEGMENT_TEXT_SIZE.toPx(resources)
+
         setLayerType(LAYER_TYPE_SOFTWARE, null)
 
         gestureDetector = GestureDetectorCompat(getContext(), object : GestureDetector.SimpleOnGestureListener() {
@@ -106,14 +130,13 @@ class PieChartView : View {
         if (itemsAdapter != null) {
 
             val radiusX = (measuredWidth - paddingStart - paddingEnd) / 2
-            val radiusY = (measuredHeight - paddingTop - paddingBottom) / 2
+            val radiusY = (measuredHeight - paddingTop - paddingBottom - getLegendHeight()) / 2
 
-            val centerX: Float = (paddingStart + radiusX).toFloat()
-            val centerY: Float = (paddingTop + radiusY).toFloat()
-
-            val gap = SEGMENTS_GAP_DP.toPx(resources)
             val radius = Math.min(radiusX, radiusY).toFloat()
             val overlayRadius = radius * OVERLAY_RADIUS_PART
+
+            val centerX: Float = (paddingStart + radius)
+            val centerY: Float = (paddingTop + radius)
 
             segmentRect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
             segmentOverlayRect.set(centerX - overlayRadius, centerY - overlayRadius,
@@ -123,15 +146,9 @@ class PieChartView : View {
 
 
             var regionRotationAngle = 0.0f
-            canvas.save()
+            var textAngle = 0.0f
             for (i in 0 until itemCount) {
                 val itemValuePart = calculateValuePart(i)
-
-
-                val halfAngle: Float = 360 * itemValuePart / 2
-
-                val dx: Float = (gap * Math.sin(Math.toRadians(halfAngle.toDouble()) + PI / 2)).toFloat()
-                val dy: Float = (gap * Math.cos(Math.toRadians(halfAngle.toDouble()) + PI / 2)).toFloat()
 
                 segmentRect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
 
@@ -149,33 +166,60 @@ class PieChartView : View {
                 segmentOverlayPath.arcTo(segmentOverlayRect, 270.0f, 360 * itemValuePart)
                 segmentOverlayPath.close()
 
-
-                canvas.drawPath(segmentPath, segmentPaint)
-
-                canvas.drawPath(segmentOverlayPath, overlayPaint)
-
-                canvas.drawPath(segmentPath, transparentLinePaint)
-
-
                 pathRotationMatrix.reset()
                 pathRotationMatrix.postRotate(regionRotationAngle, centerX, centerY)
                 segmentPath.transform(pathRotationMatrix)
+                segmentOverlayPath.transform(pathRotationMatrix)
+
+                textAngle = regionRotationAngle + 360 * itemValuePart / 2
+                regionRotationAngle += 360 * itemValuePart
+
 
                 pathRotationRegion.set(segmentRect.left.toInt(),
                         segmentRect.top.toInt(), segmentRect.right.toInt(), segmentRect.bottom.toInt())
                 segmentRegions[i].setPath(segmentPath, pathRotationRegion)
-                regionRotationAngle += 360 * itemValuePart
 
+                canvas.drawPath(segmentPath, segmentPaint)
+                canvas.drawPath(segmentOverlayPath, overlayPaint)
+                canvas.drawPath(segmentPath, transparentLinePaint)
 
-                canvas.rotate(360 * itemValuePart, centerX, centerY)
+                val gap = TEXT_RADIUS_PART * radius
+                val textAngleRad = Math.toRadians(textAngle.toDouble())
+
+                val dx: Float = (gap * Math.sin(textAngleRad)).toFloat()
+                val dy: Float = (gap * Math.cos(textAngleRad + PI)).toFloat()
+
+                canvas.drawTextCentered("${Math.round(itemValuePart * 1000.0f) / 10.0f}%",
+                        centerX + dx, centerY + dy, segmentTextPaint)
+
             }
-            canvas.restore()
 
             canvas.drawCircle(centerX, centerY, INNER_RADIUS_PART * radius, transparentFillPaint)
 
-
             canvas.drawTextCentered(itemsAdapter.getChartName(), centerX, centerY, nameTextPaint)
 
+            drawLegend(canvas)
+        }
+    }
+
+    private fun drawLegend(canvas: Canvas) {
+        val itemsAdapter = adapter
+        if (itemsAdapter != null) {
+            val markerSize = LEGEND_MARKER_SIZE_DP.toPx(resources)
+            val textGap = LEGEND_LINE_GAP_DP.toPx(resources).toInt()
+            val x = paddingLeft
+            var y = height - paddingBottom
+            for (i in itemsAdapter.getSegmentCount() - 1 downTo  0) {
+
+                segmentPaint.color = itemsAdapter.getSegmentColor(i)
+
+                canvas.drawRect(x.toFloat(), y - markerSize, x + markerSize, y.toFloat(), segmentPaint)
+
+                val segmentName = itemsAdapter.getSegmentName(i)
+                val textHeight = segmentTextPaint.getTextHeight(segmentName)
+                canvas.drawText(segmentName, x + markerSize + textGap, y - markerSize / 2 + textHeight / 2, segmentTextPaint)
+                y -= Math.max(markerSize.toInt(), textHeight) + textGap
+            }
         }
     }
 
@@ -223,16 +267,14 @@ class PieChartView : View {
         pieChartClickListener?.onSegmentClick(segmentIndex)
     }
 
-    interface PieChartAdapter {
-
-        fun getChartName(): String
-
-        fun getSegmentCount(): Int
-
-        fun getSegmentValue(index: Int): Double
-
-        fun getSegmentColor(index: Int): Int
-
+    private fun getLegendHeight(): Int {
+        val itemsAdapter = adapter
+        if (itemsAdapter != null) {
+            val lineHeight = Math.max(segmentTextPaint.getTextHeight("#"), LEGEND_MARKER_SIZE_DP.toPx(resources).toInt())
+            val count = itemsAdapter.getSegmentCount()
+            return count * lineHeight + (count - 1) * LEGEND_LINE_GAP_DP.toPx(resources).toInt()
+        }
+        return 0
     }
 
 }

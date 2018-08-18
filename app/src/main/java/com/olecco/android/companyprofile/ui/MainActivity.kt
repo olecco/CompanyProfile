@@ -16,6 +16,7 @@ import com.olecco.android.companyprofile.R
 import com.olecco.android.companyprofile.api.ProfilesRepository
 import com.olecco.android.companyprofile.model.Company
 import com.olecco.android.companyprofile.model.CompanyData
+import com.olecco.android.companyprofile.model.DivisionData
 import com.olecco.android.companyprofile.ui.piechart.PieChartAdapter
 import com.olecco.android.companyprofile.ui.piechart.PieChartClickListener
 import com.olecco.android.companyprofile.ui.piechart.PieChartView
@@ -30,14 +31,18 @@ class MainActivity : AppCompatActivity() {
     val profilesRepository: ProfilesRepository
         get() = profileApplication.profilesRepository
 
-    lateinit var profilesViewModel: ProfilesViewModel
-    lateinit var companyListAdapter: CompanyListAdapter
-    lateinit var pieChartView: PieChartView
+    private lateinit var profilesViewModel: ProfilesViewModel
+    private lateinit var companyListAdapter: CompanyListAdapter
+    private lateinit var pieChartView: PieChartView
+
+    private lateinit var pieChartAdapter: DivisionListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         bindViews()
+
+        pieChartAdapter = DivisionListAdapter(resources.getIntArray(R.array.profile_colors))
 
         profilesViewModel = ViewModelProviders.of(this,
                 ProfilesViewModelFactory(profilesRepository)).get(ProfilesViewModel::class.java)
@@ -47,6 +52,10 @@ class MainActivity : AppCompatActivity() {
         })
 
         profilesViewModel.divisionsData.observe(this, Observer {
+
+            pieChartAdapter.chartNameString = profilesViewModel.selectedCompany
+            pieChartAdapter.divisions = it ?: listOf()
+            pieChartView.adapter = pieChartAdapter
 
             Log.d("111", "size=${it?.size}")
 
@@ -65,46 +74,45 @@ class MainActivity : AppCompatActivity() {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, position: Int, p3: Long) {
 
                 val company = companyListAdapter.getCompany(position)
-
-                profilesViewModel.selectCompany(company.ticker!!)
+                profilesViewModel.selectCompany(company.ticker ?: "")
 
             }
         }
 
         pieChartView = findViewById(R.id.pie_chart)
 
-        val adapter: PieChartAdapter = object : PieChartAdapter {
-            override fun getSegmentName(index: Int): String {
-                if (index == 0) return "000000000000000"
-                if (index == 1) return "1111111"
-                if (index == 2) return "22222222222222222222222222"
-                return "333333333333333"
-            }
-
-            override fun getChartName(): String {
-                return "AAPL"
-            }
-
-            override fun getSegmentColor(index: Int): Int {
-                if (index == 0) return Color.RED
-                if (index == 1) return Color.GREEN
-                if (index == 2) return Color.BLUE
-                return Color.WHITE
-            }
-
-            override fun getSegmentValue(index: Int): Double {
-                if (index == 0) return 5.0
-                if (index == 1) return 3.0
-                if (index == 2) return 3.0
-                return 1.0
-            }
-
-            override fun getSegmentCount(): Int {
-                return 4
-            }
-        }
-
-        pieChartView.adapter = adapter
+//        val adapter: PieChartAdapter = object : PieChartAdapter {
+//            override fun getSegmentName(index: Int): String {
+//                if (index == 0) return "000000000000000"
+//                if (index == 1) return "1111111"
+//                if (index == 2) return "22222222222222222222222222"
+//                return "333333333333333"
+//            }
+//
+//            override fun getChartName(): String {
+//                return "AAPL"
+//            }
+//
+//            override fun getSegmentColor(index: Int): Int {
+//                if (index == 0) return Color.RED
+//                if (index == 1) return Color.GREEN
+//                if (index == 2) return Color.BLUE
+//                return Color.WHITE
+//            }
+//
+//            override fun getSegmentValue(index: Int): Double {
+//                if (index == 0) return 5.0
+//                if (index == 1) return 3.0
+//                if (index == 2) return 3.0
+//                return 1.0
+//            }
+//
+//            override fun getSegmentCount(): Int {
+//                return 4
+//            }
+//        }
+//
+//        pieChartView.adapter = adapter
 
         pieChartView.pieChartClickListener = object : PieChartClickListener {
             override fun onSegmentClick(segmentIndex: Int) {
@@ -116,7 +124,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    class CompanyListAdapter(context: Context): ArrayAdapter<String>(context,
+    private class CompanyListAdapter(context: Context): ArrayAdapter<String>(context,
             android.R.layout.simple_spinner_item) {
 
         var data: List<Company> = ArrayList()
@@ -139,6 +147,34 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private class DivisionListAdapter(val colors: IntArray) : PieChartAdapter {
 
+        var divisions: List<DivisionData> = listOf()
+        var chartNameString: String = ""
+
+        override fun getChartName(): String {
+            return chartNameString
+        }
+
+        override fun getSegmentCount(): Int {
+            return divisions.size
+        }
+
+        override fun getSegmentValue(index: Int): Double {
+            return divisions[index].value ?: 0.0
+        }
+
+        override fun getSegmentColor(index: Int): Int {
+            if (index in 0 until colors.size) {
+                return colors[index]
+            }
+            return Color.BLACK
+        }
+
+        override fun getSegmentName(index: Int): String {
+            return divisions[index].name ?: ""
+        }
+
+    }
 
 }

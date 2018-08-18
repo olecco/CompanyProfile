@@ -21,6 +21,8 @@ class ProfilesViewModel(private val repository: ProfilesRepository) : ViewModel(
         }
 
     private val selectedCompanyData: MutableLiveData<String> = MutableLiveData()
+    val selectedCompany: String
+        get() = selectedCompanyData.value ?: ""
 
     val divisionsData: LiveData<List<DivisionData>> =
             Transformations.switchMap(selectedCompanyData) {

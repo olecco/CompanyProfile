@@ -137,7 +137,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private class CompanyListAdapter(context: Context): ArrayAdapter<String>(context,
-            android.R.layout.simple_spinner_item) {
+            R.layout.company_list_spinner_item) {
 
         var data: List<Company> = ArrayList()
             set(value) {

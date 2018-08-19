@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity() {
         when(companyListResponse?.state) {
             ApiResponseState.LOADING -> {
                 companySpinnerView.hide()
-                pieChartView.hide()
+                //pieChartView.hide()
                 progressView.show()
             }
             ApiResponseState.SUCCESS -> {
@@ -125,7 +125,7 @@ class MainActivity : AppCompatActivity() {
     private fun handleDivisionListResponse(divisionListResponse: ApiResponse<List<DivisionData>>?) {
         when(divisionListResponse?.state) {
             ApiResponseState.LOADING -> {
-                pieChartView.hide()
+                pieChartView.cleanPie()
                 legendView.hide()
                 progressView.show()
             }
@@ -136,7 +136,7 @@ class MainActivity : AppCompatActivity() {
 
                 legendAdapter.pieChartAdapter = pieChartAdapter
 
-                pieChartView.show()
+                pieChartView.fillPie()
                 legendView.show()
                 progressView.hide()
             }

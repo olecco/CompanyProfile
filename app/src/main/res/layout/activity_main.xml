@@ -41,7 +41,6 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:padding="@dimen/common_margin"
-        android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/legend"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -51,7 +50,7 @@
         android:id="@+id/legend"
         android:layout_width="0dp"
         android:layout_height="200dp"
-        android:visibility="gone"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />

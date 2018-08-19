@@ -1,14 +1,17 @@
 package com.olecco.android.companyprofile.ui.piechart
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.support.v4.view.GestureDetectorCompat
+import android.support.v4.view.animation.FastOutSlowInInterpolator
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import com.olecco.android.companyprofile.ui.drawTextCentered
-import com.olecco.android.companyprofile.ui.getTextHeight
 import com.olecco.android.companyprofile.ui.toPx
 import java.lang.Math.PI
 
@@ -45,9 +48,17 @@ class PieChartView : View {
             valueSum = if (value == null) 0.0 else calculateValueSum()
             invalidate()
         }
+    private var newAdapter: PieChartAdapter? = null
     var pieChartClickListener: PieChartClickListener? = null
 
     private var valueSum: Double = 0.0
+    private var radius: Float = 0.0f
+    private var minInnerRadius: Float = 0.0f
+
+    private var cleanEndAnglePart: Float = 0.7f
+    private var cleaned: Boolean = false
+    private var animationInProgress: Boolean = false
+    private var needStartAnimation: Boolean = false
 
     private val segmentPaint: Paint = Paint()
     private val overlayPaint: Paint = Paint()
@@ -55,6 +66,7 @@ class PieChartView : View {
     private val transparentFillPaint: Paint
     private val nameTextPaint: Paint = Paint()
     private val segmentTextPaint: Paint
+    private val segmentCleanPaint: Paint
 
     private val segmentPath: Path = Path()
     private val segmentOverlayPath: Path = Path()
@@ -76,6 +88,9 @@ class PieChartView : View {
             style = Paint.Style.FILL
             isAntiAlias = true
         }
+
+        segmentCleanPaint = Paint(segmentPaint)
+        segmentCleanPaint.color = Color.parseColor("#FF7B7B7B")
 
         with(overlayPaint) {
             color = Color.parseColor("#40000000")
@@ -125,11 +140,6 @@ class PieChartView : View {
     override fun onDraw(canvas: Canvas) {
         val itemsAdapter = adapter
         if (itemsAdapter != null) {
-
-            val radiusX = (measuredWidth - paddingStart - paddingEnd) / 2
-            val radiusY = (measuredHeight - paddingTop - paddingBottom) / 2
-
-            val radius = Math.min(radiusX, radiusY).toFloat()
             val overlayRadius = radius * OVERLAY_RADIUS_PART
 
             val centerX: Float = (paddingStart + (measuredWidth - paddingStart - paddingEnd) / 2.0f)
@@ -141,12 +151,11 @@ class PieChartView : View {
 
             val itemCount: Int = itemsAdapter.getSegmentCount()
 
+            segmentRect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
 
             var regionRotationAngle = 0.0f
             for (i in 0 until itemCount) {
                 val itemValuePart = calculateValuePart(i)
-
-                segmentRect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
 
                 segmentPaint.color = itemsAdapter.getSegmentColor(i)
 
@@ -175,14 +184,36 @@ class PieChartView : View {
 
                 canvas.drawPath(segmentPath, segmentPaint)
                 canvas.drawPath(segmentOverlayPath, overlayPaint)
+
+                canvas.drawPath(segmentPath, transparentLinePaint)
+
+            }
+
+            drawSegmentLabels(canvas, radius, centerX, centerY)
+
+
+            // clean
+            if (cleaned) {
+                segmentPath.reset()
+                segmentPath.moveTo(centerX, centerY)
+                segmentPath.lineTo(centerX, (centerY - radius))
+                segmentPath.arcTo(segmentRect, 270.0f, cleanEndAnglePart * 360)
+                segmentPath.close()
+
+                segmentOverlayPath.reset()
+                segmentOverlayPath.moveTo(centerX, centerY)
+                segmentOverlayPath.lineTo(centerX, (centerY - overlayRadius))
+                segmentOverlayPath.arcTo(segmentOverlayRect, 270.0f, cleanEndAnglePart * 360)
+                segmentOverlayPath.close()
+
+                canvas.drawPath(segmentPath, segmentCleanPaint)
+                canvas.drawPath(segmentOverlayPath, overlayPaint)
                 canvas.drawPath(segmentPath, transparentLinePaint)
             }
 
-            canvas.drawCircle(centerX, centerY, INNER_RADIUS_PART * radius, transparentFillPaint)
 
+            canvas.drawCircle(centerX, centerY, minInnerRadius, transparentFillPaint)
             canvas.drawTextCentered(itemsAdapter.getChartName(), centerX, centerY, nameTextPaint)
-
-            drawSegmentLabels(canvas, radius, centerX, centerY)
         }
     }
 
@@ -211,6 +242,13 @@ class PieChartView : View {
 
             }
         }
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        val radiusX = (measuredWidth - paddingStart - paddingEnd) / 2
+        val radiusY = (measuredHeight - paddingTop - paddingBottom) / 2
+        radius = Math.min(radiusX, radiusY).toFloat()
+        minInnerRadius = INNER_RADIUS_PART * radius
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -253,8 +291,66 @@ class PieChartView : View {
         return 0.0
     }
 
-    fun notifySegmentClick(segmentIndex: Int) {
+    private fun notifySegmentClick(segmentIndex: Int) {
         pieChartClickListener?.onSegmentClick(segmentIndex)
+    }
+
+    fun cleanPie() {
+        cleaned = true
+        if (!animationInProgress) {
+            animationInProgress = true
+            //cleanStartAnglePart = 0.0f
+            val animator: ValueAnimator = ValueAnimator.ofFloat(0.0f, 0.999f)
+            animator.duration = 600
+            animator.interpolator = FastOutSlowInInterpolator()
+            animator.addUpdateListener {
+                cleanEndAnglePart = it.animatedValue as Float
+                invalidate()
+            }
+            animator.addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator?) {
+                    animationInProgress = false
+                    if (needStartAnimation) {
+                        needStartAnimation = false
+                        fillPie()
+                    }
+                }
+            })
+            animator.start()
+        } else {
+            needStartAnimation = true
+        }
+    }
+
+    fun fillPie() {
+        cleaned = true
+        if (!animationInProgress) {
+            animationInProgress = true
+            //this.adapter = adapter
+            cleanEndAnglePart = 0.999f
+            val animator: ValueAnimator = ValueAnimator.ofFloat(-0.999f, 0.0f)
+            animator.duration = 600
+            animator.interpolator = FastOutSlowInInterpolator()
+            animator.addUpdateListener {
+                cleanEndAnglePart = it.animatedValue as Float
+                invalidate()
+            }
+            animator.addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator?) {
+                    animationInProgress = false
+                    cleaned = false
+                    invalidate()
+                    if (needStartAnimation) {
+                        needStartAnimation = false
+                        cleanPie()
+                    }
+                }
+            })
+            animator.start()
+        } else {
+            //newAdapter = adapter
+            needStartAnimation = true
+        }
     }
 
 }

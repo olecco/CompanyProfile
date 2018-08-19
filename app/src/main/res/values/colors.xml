@@ -2,7 +2,7 @@
 <resources>
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorAccent">#38A7DE</color>
 
     <array name="profile_colors">
         <item>#38A7DE</item>
@@ -13,6 +13,7 @@
         <item>#34A6B6</item>
         <item>#7FCCC4</item>
         <item>#B4E0DC</item>
+        <item>#54B0FC</item>
     </array>
 
 </resources>

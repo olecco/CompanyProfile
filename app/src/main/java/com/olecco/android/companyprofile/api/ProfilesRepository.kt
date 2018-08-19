@@ -2,6 +2,7 @@ package com.olecco.android.companyprofile.api
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
+import com.olecco.android.companyprofile.model.Company
 import com.olecco.android.companyprofile.model.CompanyData
 import com.olecco.android.companyprofile.model.CompanyList
 import kotlinx.coroutines.experimental.launch
@@ -17,46 +18,48 @@ class ProfilesRepository(private val apiClient: ApiClient) {
         result.postValue(apiResponse)
 
         launch {
-            val request = apiClient.getCompanyList()
+            try {
+                val request = apiClient.getCompanyList()
 
-            apiResponse.data = request.await()
-            apiResponse.state = ApiResponseState.SUCCESS
+                val data = request.await()
+                data.companies = data.companies?.sortedBy {it.name}
 
+                apiResponse.data = data
+                apiResponse.state = ApiResponseState.SUCCESS
+            }
+            catch (e: Exception) {
+                handleError(apiResponse, e)
+            }
             result.postValue(apiResponse)
-
         }
-
-
-
         return result
     }
 
+    fun getCompanyData(symbol: String): LiveData<ApiResponse<CompanyData>> {
+        val result = MutableLiveData<ApiResponse<CompanyData>>()
 
-//    fun req(): Response<CompanyList> {
-//        val request = apiClient.getCompanyList()
-//
-//
-//        return request.execute()
-//    }
-
-    fun getCompanyData(symbol: String): LiveData<CompanyData> {
-        val result = MutableLiveData<CompanyData>()
+        val apiResponse: ApiResponse<CompanyData> = ApiResponse()
+        apiResponse.state = ApiResponseState.LOADING
+        result.postValue(apiResponse)
 
         launch {
-            val request = apiClient.getCompanyData(symbol)
+            try {
+                val request = apiClient.getCompanyData(symbol)
 
-            val response = request.await()
-
-
-            result.postValue(response)
-
-
+                apiResponse.data = request.await()
+                apiResponse.state = ApiResponseState.SUCCESS
+            }
+            catch (e: Exception) {
+                handleError(apiResponse, e)
+            }
+            result.postValue(apiResponse)
         }
-
         return result
-
     }
 
-
+    private fun handleError(apiResponse: ApiResponse<out Any>, e: Exception) {
+        apiResponse.state = ApiResponseState.ERROR
+        apiResponse.errorMessage = e.message ?: ""
+    }
 
 }

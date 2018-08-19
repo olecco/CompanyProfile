@@ -25,7 +25,7 @@ class ProfilesViewModel(private val repository: ProfilesRepository) : ViewModel(
     val selectedCompany: String
         get() = selectedCompanyData.value ?: ""
 
-    val divisionsData: LiveData<List<DivisionData>> =
+    val divisionsData: LiveData<ApiResponse<List<DivisionData>>> =
             Transformations.switchMap(selectedCompanyData) {
                 Transformations.map(repository.getCompanyData(it)) {
                     getDivisionDataList(it)
@@ -36,8 +36,14 @@ class ProfilesViewModel(private val repository: ProfilesRepository) : ViewModel(
         selectedCompanyData.value = companySymbol
     }
 
-    private fun getDivisionDataList(companyData: CompanyData): List<DivisionData> {
-        return companyData.treeData?.companyRoot?.divisionDataList ?: listOf()
+    private fun getDivisionDataList(companyDataResponse: ApiResponse<CompanyData>): ApiResponse<List<DivisionData>> {
+        val divisionDataResponse: ApiResponse<List<DivisionData>> = ApiResponse()
+        divisionDataResponse.state = companyDataResponse.state
+        divisionDataResponse.errorMessage = companyDataResponse.errorMessage
+        val companyData: CompanyData? = companyDataResponse.data
+        divisionDataResponse.data =
+                companyData?.treeData?.companyRoot?.divisionDataList ?: listOf()
+        return divisionDataResponse
     }
 
 }

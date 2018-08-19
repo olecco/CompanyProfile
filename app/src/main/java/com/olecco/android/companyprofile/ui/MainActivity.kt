@@ -6,6 +6,8 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
@@ -21,6 +23,7 @@ import com.olecco.android.companyprofile.model.CompanyList
 import com.olecco.android.companyprofile.model.DivisionData
 import com.olecco.android.companyprofile.ui.piechart.PieChartAdapter
 import com.olecco.android.companyprofile.ui.piechart.PieChartClickListener
+import com.olecco.android.companyprofile.ui.piechart.PieChartLegendAdaper
 import com.olecco.android.companyprofile.ui.piechart.PieChartView
 import com.olecco.android.companyprofile.ui.viewmodel.ProfilesViewModel
 import com.olecco.android.companyprofile.ui.viewmodel.ProfilesViewModelFactory
@@ -35,6 +38,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var profilesViewModel: ProfilesViewModel
     private lateinit var companyListAdapter: CompanyListAdapter
+    private lateinit var legendAdapter: PieChartLegendAdaper
 
     private lateinit var companySpinnerView: Spinner
     private lateinit var pieChartView: PieChartView
@@ -86,6 +90,11 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
+
+        legendAdapter = PieChartLegendAdaper()
+        val legendView: RecyclerView = findViewById(R.id.legend)
+        legendView.layoutManager = LinearLayoutManager(this)
+        legendView.adapter = legendAdapter
     }
 
     private fun handleCompanyListResponse(companyListResponse: ApiResponse<CompanyList>?) {
@@ -122,6 +131,8 @@ class MainActivity : AppCompatActivity() {
                 pieChartAdapter.chartNameString = profilesViewModel.selectedCompany
                 pieChartAdapter.divisions = divisionListResponse.data ?: listOf()
                 pieChartView.adapter = pieChartAdapter
+
+                legendAdapter.pieChartAdapter = pieChartAdapter
 
                 pieChartView.show()
                 progressView.hide()

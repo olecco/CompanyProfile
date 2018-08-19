@@ -2,5 +2,6 @@
 <resources>
 
     <dimen name="common_margin">20dp</dimen>
+    <dimen name="common_half_margin">10dp</dimen>
 
 </resources>

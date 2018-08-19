@@ -19,9 +19,6 @@ private const val TEXT_RADIUS_PART = 0.75f
 private const val NAME_TEXT_SIZE = 24
 private const val SEGMENT_TEXT_SIZE = 16
 
-private const val LEGEND_LINE_GAP_DP = 10
-private const val LEGEND_MARKER_SIZE_DP = 24
-
 interface PieChartAdapter {
 
     fun getChartName(): String
@@ -130,7 +127,7 @@ class PieChartView : View {
         if (itemsAdapter != null) {
 
             val radiusX = (measuredWidth - paddingStart - paddingEnd) / 2
-            val radiusY = (measuredHeight - paddingTop - paddingBottom - getLegendHeight()) / 2
+            val radiusY = (measuredHeight - paddingTop - paddingBottom) / 2
 
             val radius = Math.min(radiusX, radiusY).toFloat()
             val overlayRadius = radius * OVERLAY_RADIUS_PART
@@ -186,8 +183,6 @@ class PieChartView : View {
             canvas.drawTextCentered(itemsAdapter.getChartName(), centerX, centerY, nameTextPaint)
 
             drawSegmentLabels(canvas, radius, centerX, centerY)
-
-            drawLegend(canvas)
         }
     }
 
@@ -214,27 +209,6 @@ class PieChartView : View {
                 canvas.drawTextCentered("${Math.round(itemValuePart * 1000.0f) / 10.0f}%",
                         centerX + dx, centerY + dy, segmentTextPaint)
 
-            }
-        }
-    }
-
-    private fun drawLegend(canvas: Canvas) {
-        val itemsAdapter = adapter
-        if (itemsAdapter != null) {
-            val markerSize = LEGEND_MARKER_SIZE_DP.toPx(resources)
-            val textGap = LEGEND_LINE_GAP_DP.toPx(resources).toInt()
-            val x = paddingLeft
-            var y = height - paddingBottom
-            for (i in itemsAdapter.getSegmentCount() - 1 downTo  0) {
-
-                segmentPaint.color = itemsAdapter.getSegmentColor(i)
-
-                canvas.drawRect(x.toFloat(), y - markerSize, x + markerSize, y.toFloat(), segmentPaint)
-
-                val segmentName = itemsAdapter.getSegmentName(i)
-                val textHeight = segmentTextPaint.getTextHeight(segmentName)
-                canvas.drawText(segmentName, x + markerSize + textGap, y - markerSize / 2 + textHeight / 2, segmentTextPaint)
-                y -= Math.max(markerSize.toInt(), textHeight) + textGap
             }
         }
     }
@@ -281,16 +255,6 @@ class PieChartView : View {
 
     fun notifySegmentClick(segmentIndex: Int) {
         pieChartClickListener?.onSegmentClick(segmentIndex)
-    }
-
-    private fun getLegendHeight(): Int {
-        val itemsAdapter = adapter
-        if (itemsAdapter != null) {
-            val lineHeight = Math.max(segmentTextPaint.getTextHeight("#"), LEGEND_MARKER_SIZE_DP.toPx(resources).toInt())
-            val count = itemsAdapter.getSegmentCount()
-            return count * lineHeight + (count - 1) * LEGEND_LINE_GAP_DP.toPx(resources).toInt()
-        }
-        return 0
     }
 
 }

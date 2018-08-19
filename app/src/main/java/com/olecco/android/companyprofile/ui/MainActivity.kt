@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var companySpinnerView: Spinner
     private lateinit var pieChartView: PieChartView
     private lateinit var progressView: View
+    private lateinit var legendView: RecyclerView
 
     private lateinit var pieChartAdapter: DivisionListAdapter
 
@@ -92,7 +93,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         legendAdapter = PieChartLegendAdaper()
-        val legendView: RecyclerView = findViewById(R.id.legend)
+        legendView = findViewById(R.id.legend)
         legendView.layoutManager = LinearLayoutManager(this)
         legendView.adapter = legendAdapter
     }
@@ -125,6 +126,7 @@ class MainActivity : AppCompatActivity() {
         when(divisionListResponse?.state) {
             ApiResponseState.LOADING -> {
                 pieChartView.hide()
+                legendView.hide()
                 progressView.show()
             }
             ApiResponseState.SUCCESS -> {
@@ -135,6 +137,7 @@ class MainActivity : AppCompatActivity() {
                 legendAdapter.pieChartAdapter = pieChartAdapter
 
                 pieChartView.show()
+                legendView.show()
                 progressView.hide()
             }
             ApiResponseState.ERROR -> {

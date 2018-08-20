@@ -55,7 +55,7 @@ class PieChartView : View {
     private var radius: Float = 0.0f
     private var minInnerRadius: Float = 0.0f
 
-    private var cleanEndAnglePart: Float = 0.7f
+    private var cleanEndAnglePart: Float = 0.0f
     private var cleaned: Boolean = false
     private var animationInProgress: Boolean = false
     private var needStartAnimation: Boolean = false
@@ -299,7 +299,6 @@ class PieChartView : View {
         cleaned = true
         if (!animationInProgress) {
             animationInProgress = true
-            //cleanStartAnglePart = 0.0f
             val animator: ValueAnimator = ValueAnimator.ofFloat(0.0f, 0.999f)
             animator.duration = 600
             animator.interpolator = FastOutSlowInInterpolator()
@@ -326,7 +325,6 @@ class PieChartView : View {
         cleaned = true
         if (!animationInProgress) {
             animationInProgress = true
-            //this.adapter = adapter
             cleanEndAnglePart = 0.999f
             val animator: ValueAnimator = ValueAnimator.ofFloat(-0.999f, 0.0f)
             animator.duration = 600
@@ -348,7 +346,6 @@ class PieChartView : View {
             })
             animator.start()
         } else {
-            //newAdapter = adapter
             needStartAnimation = true
         }
     }

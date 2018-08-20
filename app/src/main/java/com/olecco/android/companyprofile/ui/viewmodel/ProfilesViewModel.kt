@@ -18,7 +18,7 @@ class ProfilesViewModel(private val repository: ProfilesRepository) : ViewModel(
             if (_companyList == null) {
                 _companyList = repository.getCompanyList()
             }
-            return _companyList!!
+            return _companyList ?: MutableLiveData()
         }
 
     private val selectedCompanyData: MutableLiveData<String> = MutableLiveData()
